@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Citizen Portal Dashboard - AquaWatch AI{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 20px;">
+  <!-- Welcome Header -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">CITIZEN COMMAND CENTER</div>
+      <h1 style="font-size: 1.85rem; font-weight: 800; color: #0f172a;">Welcome back, {{ user.full_name }}</h1>
+      <p style="font-size: 0.95rem; color: #475569;">Track your submitted water leakage tickets and monitor municipal repair updates.</p>
+    </div>
+    <div style="display: flex; gap: 12px;">
+      <a href="{{ url_for('report_leakage') }}" class="btn btn-primary btn-lg" id="btn-dashboard-report">
+        <i class="fa-solid fa-plus-circle"></i> Report New Leak
+      </a>
+      <a href="{{ url_for('complaint_history') }}" class="btn btn-secondary btn-lg">
+        <i class="fa-solid fa-clock-rotate-left"></i> Full History
+      </a>
+    </div>
+  </div>
+
+  <!-- Quick KPI Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fa-solid fa-file-invoice"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ user_stats.total }}</div>
+        <div class="stat-label">My Total Reports</div>
+        <div class="stat-desc">Submitted by your account</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="fa-solid fa-hourglass-half"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ user_stats.pending }}</div>
+        <div class="stat-label">Pending Review</div>
+        <div class="stat-desc">Queued in triage</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="fa-solid fa-wrench"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ user_stats.in_progress }}</div>
+        <div class="stat-label">In Progress</div>
+        <div class="stat-desc">Field technician on-site</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ user_stats.resolved }}</div>
+        <div class="stat-label">Resolved &amp; Closed</div>
+        <div class="stat-desc">Water loss stopped</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Complaints Table Card -->
+  <div class="card" style="padding: 24px;">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fa-solid fa-list-check" style="color: var(--primary);"></i> My Active &amp; Recent Reports
+      </h2>
+      <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:0.8rem;">
+        {{ complaints|length }} Records Found
+      </span>
+    </div>
+
+    {% if complaints %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Ticket ID</th>
+              <th>Incident Title &amp; Location</th>
+              <th>Category</th>
+              <th>AI Priority</th>
+              <th>Status</th>
+              <th>Reported On</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in complaints %}
+              <tr>
+                <td>
+                  <strong style="color: var(--primary); font-family: monospace; font-size: 0.95rem;">
+                    {{ c.complaint_id }}
+                  </strong>
+                  {% if c.is_duplicate_of %}
+                    <div style="font-size: 0.7rem; color: #d97706; margin-top: 2px;">
+                      <i class="fa-solid fa-copy"></i> Linked to {{ c.is_duplicate_of }}
+                    </div>
+                  {% endif %}
+                </td>
+                <td>
+                  <div style="font-weight: 700; color: #0f172a; margin-bottom: 2px;">{{ c.title }}</div>
+                  <div style="font-size: 0.8rem; color: #64748b;">
+                    <i class="fa-solid fa-location-dot" style="color:#0284c7;"></i> {{ c.street_name }}
+                  </div>
+                </td>
+                <td>
+                  <span class="badge" style="background:#e0f2fe; color:#0369a1;">
+                    {{ c.category }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge badge-prio-{{ c.priority.lower() }}">
+                    {{ c.priority }} ({{ c.ai_priority_score }})
+                  </span>
+                </td>
+                <td>
+                  <span class="badge badge-{{ c.status.lower().replace(' ', '-') }}">
+                    {{ c.status }}
+                  </span>
+                </td>
+                <td style="font-size: 0.825rem; color: #64748b; white-space: nowrap;">
+                  {{ c.created_at[:16] }}
+                </td>
+                <td>
+                  <a href="{{ url_for('track_complaint', id=c.complaint_id) }}" class="btn btn-outline btn-sm">
+                    <i class="fa-solid fa-eye"></i> Track
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <!-- Empty State -->
+      <div style="text-align: center; padding: 48px 20px;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: #f0f9ff; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; margin: 0 auto 16px;">
+          <i class="fa-solid fa-droplet-slash"></i>
+        </div>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 8px;">No Complaints Reported Yet</h3>
+        <p style="font-size: 0.9rem; color: #64748b; max-width: 420px; margin: 0 auto 20px;">
+          You haven't reported any water leakages. If you notice a broken pipe or leaking tap, report it immediately to alert municipal crews.
+        </p>
+        <a href="{{ url_for('report_leakage') }}" class="btn btn-primary">
+          <i class="fa-solid fa-plus-circle"></i> Report Water Leakage Now
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

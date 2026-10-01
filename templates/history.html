@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Complaint History - AquaWatch AI{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 20px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">CITIZEN ARCHIVE</div>
+      <h1 style="font-size: 1.85rem; font-weight: 800; color: #0f172a;">Complaint History &amp; Records</h1>
+      <p style="font-size: 0.95rem; color: #475569;">Review all past water leakage reports and resolution timestamps.</p>
+    </div>
+    <a href="{{ url_for('report_leakage') }}" class="btn btn-primary">
+      <i class="fa-solid fa-plus-circle"></i> Report New Leak
+    </a>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="card" style="padding: 18px 24px; margin-bottom: 24px;">
+    <form method="GET" action="{{ url_for('complaint_history') }}" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; flex: 1;">
+        <input type="text" name="q" value="{{ query_q or '' }}" placeholder="Search by Street, Title or ID..." class="form-control" style="max-width: 280px;">
+
+        <select name="status" class="form-select" style="max-width: 170px;">
+          <option value="">All Statuses</option>
+          <option value="Pending" {% if query_status == 'Pending' %}selected{% endif %}>Pending</option>
+          <option value="Assigned" {% if query_status == 'Assigned' %}selected{% endif %}>Assigned</option>
+          <option value="In Progress" {% if query_status == 'In Progress' %}selected{% endif %}>In Progress</option>
+          <option value="Resolved" {% if query_status == 'Resolved' %}selected{% endif %}>Resolved</option>
+        </select>
+
+        <select name="category" class="form-select" style="max-width: 190px;">
+          <option value="">All Categories</option>
+          <option value="Pipe Leakage" {% if query_cat == 'Pipe Leakage' %}selected{% endif %}>Pipe Leakage</option>
+          <option value="Tap Leakage" {% if query_cat == 'Tap Leakage' %}selected{% endif %}>Tap Leakage</option>
+          <option value="Road Flooding" {% if query_cat == 'Road Flooding' %}selected{% endif %}>Road Flooding</option>
+          <option value="Main Pipeline Burst" {% if query_cat == 'Main Pipeline Burst' %}selected{% endif %}>Main Pipeline Burst</option>
+          <option value="Sewage & Contamination" {% if query_cat == 'Sewage & Contamination' %}selected{% endif %}>Sewage &amp; Contamination</option>
+          <option value="Other / Meter" {% if query_cat == 'Other / Meter' %}selected{% endif %}>Other / Meter</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        <a href="{{ url_for('complaint_history') }}" class="btn btn-secondary btn-sm">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Records Table -->
+  <div class="card" style="padding: 24px;">
+    {% if complaints %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Ticket ID</th>
+              <th>Incident Title</th>
+              <th>Location</th>
+              <th>AI Category</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Reported On</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in complaints %}
+              <tr>
+                <td>
+                  <strong style="color: var(--primary); font-family: monospace; font-size: 0.95rem;">
+                    {{ c.complaint_id }}
+                  </strong>
+                </td>
+                <td>
+                  <div style="font-weight: 700; color: #0f172a;">{{ c.title }}</div>
+                </td>
+                <td style="font-size: 0.85rem; color: #475569;">
+                  <i class="fa-solid fa-location-dot" style="color: #0284c7;"></i> {{ c.street_name }}
+                </td>
+                <td>
+                  <span class="badge" style="background:#e0f2fe; color:#0369a1;">
+                    {{ c.category }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge badge-prio-{{ c.priority.lower() }}">
+                    {{ c.priority }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge badge-{{ c.status.lower().replace(' ', '-') }}">
+                    {{ c.status }}
+                  </span>
+                </td>
+                <td style="font-size: 0.825rem; color: #64748b; white-space: nowrap;">
+                  {{ c.created_at[:16] }}
+                </td>
+                <td>
+                  <a href="{{ url_for('track_complaint', id=c.complaint_id) }}" class="btn btn-outline btn-sm">
+                    <i class="fa-solid fa-compass"></i> Track
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 48px 20px;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: #f0f9ff; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 14px;">
+          <i class="fa-solid fa-inbox"></i>
+        </div>
+        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 6px;">No Matching Complaints Found</h3>
+        <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 16px;">Try adjusting your filter keywords or view all complaints.</p>
+        <a href="{{ url_for('complaint_history') }}" class="btn btn-secondary btn-sm">Clear Filters</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

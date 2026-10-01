@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+
+{% block title %}Complaint Management & Triage - AquaWatch AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="padding: 32px 24px;">
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <div style="font-size: 0.85rem; color: #0284c7; font-weight: 700; text-transform: uppercase;">ADMINISTRATION &amp; TRIAGE</div>
+      <h1 style="font-size: 1.85rem; font-weight: 800; color: #0f172a; margin: 2px 0;">Complaint Management Center</h1>
+      <p style="font-size: 0.95rem; color: #475569;">Assign field crew, update repair milestones, review duplicate flags, or override AI predictions.</p>
+    </div>
+
+    <div style="display: flex; gap: 12px;">
+      <a href="{{ url_for('admin_export_csv') }}" class="btn btn-outline">
+        <i class="fa-solid fa-download"></i> Export CSV
+      </a>
+      <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+        <i class="fa-solid fa-gauge"></i> Executive Overview
+      </a>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="card" style="padding: 18px 24px; margin-bottom: 24px;">
+    <form method="GET" action="{{ url_for('admin_complaints') }}" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; flex: 1;">
+        <input type="text" name="q" value="{{ query_q or '' }}" placeholder="Search ID, street name, citizen..." class="form-control" style="max-width: 280px;">
+
+        <select name="status" class="form-select" style="max-width: 160px;">
+          <option value="">All Statuses</option>
+          <option value="Pending" {% if query_status == 'Pending' %}selected{% endif %}>Pending</option>
+          <option value="Assigned" {% if query_status == 'Assigned' %}selected{% endif %}>Assigned</option>
+          <option value="In Progress" {% if query_status == 'In Progress' %}selected{% endif %}>In Progress</option>
+          <option value="Resolved" {% if query_status == 'Resolved' %}selected{% endif %}>Resolved</option>
+          <option value="Rejected" {% if query_status == 'Rejected' %}selected{% endif %}>Rejected</option>
+        </select>
+
+        <select name="category" class="form-select" style="max-width: 180px;">
+          <option value="">All Categories</option>
+          <option value="Pipe Leakage" {% if query_cat == 'Pipe Leakage' %}selected{% endif %}>Pipe Leakage</option>
+          <option value="Tap Leakage" {% if query_cat == 'Tap Leakage' %}selected{% endif %}>Tap Leakage</option>
+          <option value="Road Flooding" {% if query_cat == 'Road Flooding' %}selected{% endif %}>Road Flooding</option>
+          <option value="Main Pipeline Burst" {% if query_cat == 'Main Pipeline Burst' %}selected{% endif %}>Main Pipeline Burst</option>
+          <option value="Sewage & Contamination" {% if query_cat == 'Sewage & Contamination' %}selected{% endif %}>Sewage &amp; Contamination</option>
+          <option value="Other / Meter" {% if query_cat == 'Other / Meter' %}selected{% endif %}>Other / Meter</option>
+        </select>
+
+        <select name="priority" class="form-select" style="max-width: 150px;">
+          <option value="">All Priorities</option>
+          <option value="High" {% if query_prio == 'High' %}selected{% endif %}>High</option>
+          <option value="Medium" {% if query_prio == 'Medium' %}selected{% endif %}>Medium</option>
+          <option value="Low" {% if query_prio == 'Low' %}selected{% endif %}>Low</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        <a href="{{ url_for('admin_complaints') }}" class="btn btn-secondary btn-sm">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Complaints Data Table -->
+  <div class="card" style="padding: 24px;">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fa-solid fa-table-list" style="color: var(--primary);"></i> Complaints Repository ({{ complaints|length }} Records)
+      </h2>
+    </div>
+
+    {% if complaints %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Ticket ID</th>
+              <th>Citizen Reporter</th>
+              <th>Location &amp; Landmark</th>
+              <th>Category (AI)</th>
+              <th>Priority</th>
+              <th>Assigned Crew</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Admin Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in complaints %}
+              <tr {% if highlight_id == c.complaint_id %}style="background: #fef9c3;"{% endif %}>
+                <td>
+                  <strong style="color: var(--primary); font-family: monospace;">{{ c.complaint_id }}</strong>
+                  {% if c.is_duplicate_of %}
+                    <div style="font-size: 0.7rem; color: #d97706; margin-top: 2px;">
+                      <i class="fa-solid fa-copy"></i> Dup of {{ c.is_duplicate_of }} ({{ c.duplicate_score }}%)
+                    </div>
+                  {% endif %}
+                </td>
+                <td>
+                  <div style="font-weight: 700; color: #0f172a;">{{ c.user_name or 'Citizen' }}</div>
+                  <div style="font-size: 0.75rem; color: #64748b;">{{ c.user_email or 'N/A' }}</div>
+                </td>
+                <td>
+                  <div style="font-weight: 600; color: #0f172a;">{{ c.street_name }}</div>
+                  <div style="font-size: 0.75rem; color: #64748b;">{{ c.landmark or 'Central Area' }}</div>
+                </td>
+                <td>
+                  <span class="badge" style="background:#e0f2fe; color:#0369a1;">{{ c.category }}</span>
+                  <div style="font-size: 0.7rem; color: #64748b; margin-top: 2px;">{{ c.ai_confidence }}% Conf</div>
+                </td>
+                <td>
+                  <span class="badge badge-prio-{{ c.priority.lower() }}">{{ c.priority }}</span>
+                </td>
+                <td>
+                  {% if c.assigned_staff_name %}
+                    <div style="font-weight: 600; font-size: 0.85rem; color: #0f172a;">
+                      <i class="fa-solid fa-user-check" style="color:#10b981;"></i> {{ c.assigned_staff_name.split()[0] }}
+                    </div>
+                  {% else %}
+                    <span style="font-size: 0.8rem; color: #94a3b8; font-style: italic;">Unassigned</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge badge-{{ c.status.lower().replace(' ', '-') }}">{{ c.status }}</span>
+                </td>
+                <td style="font-size: 0.8rem; color: #64748b; white-space: nowrap;">
+                  {{ c.created_at[:16] }}
+                </td>
+                <td>
+                  <div style="display: flex; gap: 6px; flex-wrap: nowrap;">
+                    <!-- Assign Staff Button -->
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="openAssignModal('{{ c.complaint_id }}', '{{ c.title|replace('\'', '\\\'') }}')" title="Assign Crew">
+                      <i class="fa-solid fa-user-plus"></i>
+                    </button>
+                    <!-- Update Status Button -->
+                    <button type="button" class="btn btn-outline btn-sm" onclick="openStatusModal('{{ c.complaint_id }}', '{{ c.status }}')" title="Update Status">
+                      <i class="fa-solid fa-arrow-progress"></i>
+                    </button>
+                    <!-- AI Override Button -->
+                    <button type="button" class="btn btn-sm" style="background:#f1f5f9; color:#475569;" onclick="openAIOverrideModal('{{ c.complaint_id }}', '{{ c.category }}', '{{ c.priority }}')" title="Correct AI Suggestion">
+                      <i class="fa-solid fa-brain"></i>
+                    </button>
+                    <!-- Track Link -->
+                    <a href="{{ url_for('track_complaint', id=c.complaint_id) }}" class="btn btn-sm" style="background:#e0f2fe; color:#0284c7;" title="View Live Ticket">
+                      <i class="fa-solid fa-eye"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 48px 20px;">
+        <p style="color: #64748b;">No complaints match the specified search parameters.</p>
+        <a href="{{ url_for('admin_complaints') }}" class="btn btn-secondary btn-sm">Clear Filters</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- =========================================================================
+     MODAL 1: Assign Maintenance Staff
+     ========================================================================= -->
+<div class="modal-overlay" id="modal-assign">
+  <div class="modal-card">
+    <button class="modal-close-btn" onclick="closeModal('modal-assign')">&times;</button>
+    <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 6px;">
+      <i class="fa-solid fa-user-gear" style="color: var(--primary);"></i> Assign Maintenance Technician
+    </h3>
+    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">
+      Assign complaint <strong id="assign-complaint-id" style="font-family: monospace; color: var(--primary);"></strong> to an available field engineer.
+    </p>
+
+    <form action="{{ url_for('admin_assign') }}" method="POST">
+      <input type="hidden" name="complaint_id" id="form-assign-cid" value="">
+
+      <div class="form-group">
+        <label for="staff_id" class="form-label">Select Field Maintenance Staff *</label>
+        <select name="staff_id" id="staff_id" class="form-select" required>
+          {% for s in staff_list %}
+            <option value="{{ s.user_id }}">
+              {{ s.full_name }} — {{ s.specialty }} ({{ s.zone }}) [{{ s.active_count }} active tasks]
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="assign_notes" class="form-label">Instructions / Dispatch Notes</label>
+        <textarea name="notes" id="assign_notes" class="form-control" rows="3" placeholder="e.g. Inspect underground joint leak with hydraulic clamp and verify clean water pressure."></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-assign')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Confirm Assignment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- =========================================================================
+     MODAL 2: Update Complaint Status
+     ========================================================================= -->
+<div class="modal-overlay" id="modal-status">
+  <div class="modal-card">
+    <button class="modal-close-btn" onclick="closeModal('modal-status')">&times;</button>
+    <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 6px;">
+      <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> Update Incident Status
+    </h3>
+    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">
+      Update status and log milestone comment for <strong id="status-complaint-id" style="font-family: monospace; color: var(--primary);"></strong>.
+    </p>
+
+    <form action="{{ url_for('admin_status_update') }}" method="POST">
+      <input type="hidden" name="complaint_id" id="form-status-cid" value="">
+
+      <div class="form-group">
+        <label for="new_status" class="form-label">New Status *</label>
+        <select name="new_status" id="new_status" class="form-select" required>
+          <option value="Pending">Pending (In Queue)</option>
+          <option value="Assigned">Assigned (Field Crew Dispatched)</option>
+          <option value="In Progress">In Progress (Work Underway)</option>
+          <option value="Resolved">Resolved (Repairs Verified &amp; Completed)</option>
+          <option value="Rejected">Rejected (Not Applicable / Private)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="status_comment" class="form-label">Audit Log Comment *</label>
+        <textarea name="comment" id="status_comment" class="form-control" rows="3" placeholder="Provide audit explanation for this status update..." required></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-status')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Update Status</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- =========================================================================
+     MODAL 3: Override AI Suggestion
+     ========================================================================= -->
+<div class="modal-overlay" id="modal-override">
+  <div class="modal-card">
+    <button class="modal-close-btn" onclick="closeModal('modal-override')">&times;</button>
+    <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 6px;">
+      <i class="fa-solid fa-brain" style="color: var(--primary);"></i> Correct AI Classification &amp; Priority
+    </h3>
+    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">
+      Override AI predictions for ticket <strong id="override-complaint-id" style="font-family: monospace; color: var(--primary);"></strong>. This feedback is recorded to retrain and evaluate the model.
+    </p>
+
+    <form action="{{ url_for('admin_ai_override') }}" method="POST">
+      <input type="hidden" name="complaint_id" id="form-override-cid" value="">
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label for="corrected_category" class="form-label">Corrected Category *</label>
+          <select name="corrected_category" id="corrected_category" class="form-select" required>
+            <option value="Pipe Leakage">Pipe Leakage</option>
+            <option value="Tap Leakage">Tap Leakage</option>
+            <option value="Road Flooding">Road Flooding</option>
+            <option value="Main Pipeline Burst">Main Pipeline Burst</option>
+            <option value="Sewage & Contamination">Sewage &amp; Contamination</option>
+            <option value="Other / Meter">Other / Meter</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="corrected_priority" class="form-label">Corrected Priority *</label>
+          <select name="corrected_priority" id="corrected_priority" class="form-select" required>
+            <option value="High">High Priority</option>
+            <option value="Medium">Medium Priority</option>
+            <option value="Low">Low Priority</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="override_notes" class="form-label">Human Reviewer Rationale</label>
+        <textarea name="notes" id="override_notes" class="form-control" rows="3" placeholder="Reason for correcting AI suggestion (e.g., photo inspection revealed private line rather than municipal conduit)..."></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-override')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Apply AI Correction</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openAssignModal(cid, title) {
+  document.getElementById('assign-complaint-id').textContent = cid;
+  document.getElementById('form-assign-cid').value = cid;
+  openModal('modal-assign');
+}
+
+function openStatusModal(cid, currentStatus) {
+  document.getElementById('status-complaint-id').textContent = cid;
+  document.getElementById('form-status-cid').value = cid;
+  document.getElementById('new_status').value = currentStatus;
+  openModal('modal-status');
+}
+
+function openAIOverrideModal(cid, currentCat, currentPrio) {
+  document.getElementById('override-complaint-id').textContent = cid;
+  document.getElementById('form-override-cid').value = cid;
+  document.getElementById('corrected_category').value = currentCat;
+  document.getElementById('corrected_priority').value = currentPrio;
+  openModal('modal-override');
+}
+</script>
+{% endblock %}

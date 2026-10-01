@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign In - AquaWatch AI{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 60px 20px; display: flex; flex-direction: column; align-items: center;">
+  <div class="card card-glass" style="max-width: 460px; width: 100%; padding: 36px; box-shadow: var(--shadow-lg);">
+    <div style="text-align: center; margin-bottom: 24px;">
+      <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="AquaWatch Logo" style="width: 52px; height: 52px; margin: 0 auto 14px;">
+      <h1 style="font-size: 1.65rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Sign In to AquaWatch</h1>
+      <p style="font-size: 0.9rem; color: #64748b;">Access your reporting portal, triage queues, or field assignments.</p>
+    </div>
+
+    <!-- Quick Demo Logins Box -->
+    <div style="background: #f0f9ff; border: 1.5px solid #bae6fd; border-radius: var(--radius-md); padding: 14px; margin-bottom: 24px;">
+      <div style="font-size: 0.8rem; font-weight: 700; color: #0369a1; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Quick Demo Evaluation (1-Click Login)
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+        <a href="{{ url_for('demo_login', role='citizen') }}" class="btn btn-sm" style="background: white; border: 1px solid #7dd3fc; color: #0369a1; font-size: 0.75rem; padding: 6px 4px; text-align: center;">
+          <i class="fa-solid fa-user"></i> Citizen
+        </a>
+        <a href="{{ url_for('demo_login', role='admin') }}" class="btn btn-sm" style="background: white; border: 1px solid #7dd3fc; color: #0369a1; font-size: 0.75rem; padding: 6px 4px; text-align: center;">
+          <i class="fa-solid fa-shield-halved"></i> Admin
+        </a>
+        <a href="{{ url_for('demo_login', role='staff') }}" class="btn btn-sm" style="background: white; border: 1px solid #7dd3fc; color: #0369a1; font-size: 0.75rem; padding: 6px 4px; text-align: center;">
+          <i class="fa-solid fa-wrench"></i> Staff
+        </a>
+      </div>
+    </div>
+
+    <form action="{{ url_for('login') }}" method="POST" id="login-form">
+      <div class="form-group">
+        <label for="email" class="form-label">Email Address</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="name@example.com" required value="{{ prefill_email or '' }}">
+      </div>
+
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <label for="password" class="form-label" style="margin-bottom:0;">Password</label>
+          <span style="font-size:0.75rem; color:#64748b;">(Demo: user123 / admin123 / staff123)</span>
+        </div>
+        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 8px;">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-color); font-size: 0.875rem; color: #64748b;">
+      Don't have an account yet? <a href="{{ url_for('register') }}" style="font-weight: 600;">Create citizen account</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

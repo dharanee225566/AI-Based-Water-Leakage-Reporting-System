@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%">
+  <rect width="600" height="400" fill="#f1f5f9"/>
+  <rect y="220" width="600" height="180" fill="#3f3f46"/>
+  <ellipse cx="300" cy="240" rx="75" ry="22" fill="#18181b" stroke="#71717a" stroke-width="4"/>
+  <ellipse cx="300" cy="270" rx="160" ry="40" fill="#713f12" opacity="0.85"/>
+  <ellipse cx="300" cy="275" rx="110" ry="25" fill="#451a03" opacity="0.9"/>
+  <text x="300" y="375" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#fef08a" text-anchor="middle">SEWAGE &amp; CONTAMINATION HAZARD EVIDENCE</text>
+</svg>

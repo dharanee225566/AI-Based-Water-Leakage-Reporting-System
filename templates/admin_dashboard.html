@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+
+{% block title %}Executive Admin Dashboard - AquaWatch AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="padding: 32px 24px;">
+  <!-- Header Banner -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <div style="font-size: 0.85rem; color: #0284c7; font-weight: 700; text-transform: uppercase;">CENTRAL OPERATIONS COMMAND</div>
+      <h1 style="font-size: 2rem; font-weight: 800; color: #0f172a; margin: 2px 0;">Municipal Administrator Dashboard</h1>
+      <p style="font-size: 0.95rem; color: #475569;">Live oversight of municipal water network, automated AI triage, and repair crew deployments.</p>
+    </div>
+
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <a href="{{ url_for('admin_complaints') }}" class="btn btn-primary" id="btn-admin-manage-complaints">
+        <i class="fa-solid fa-list-check"></i> Manage All Complaints
+      </a>
+      <a href="{{ url_for('analytics_page') }}" class="btn btn-secondary">
+        <i class="fa-solid fa-chart-line"></i> Full Analytics &amp; Reports
+      </a>
+      <a href="{{ url_for('admin_export_csv') }}" class="btn btn-outline" id="btn-admin-export">
+        <i class="fa-solid fa-download"></i> Export CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- 6 Key Executive KPI Cards -->
+  <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fa-solid fa-layer-group"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ kpis.total }}</div>
+        <div class="stat-label">Total Reports</div>
+        <div class="stat-desc">Historical logged</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="fa-solid fa-clock"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ kpis.pending }}</div>
+        <div class="stat-label">Pending Triage</div>
+        <div class="stat-desc">Awaiting staff assignment</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="fa-solid fa-wrench"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ kpis.in_progress }}</div>
+        <div class="stat-label">In Progress</div>
+        <div class="stat-desc">Field repairs ongoing</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ kpis.resolved }}</div>
+        <div class="stat-label">Resolved Leaks</div>
+        <div class="stat-desc">{{ kpis.resolution_rate }}% completion rate</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ kpis.high_priority }}</div>
+        <div class="stat-label">High Priority</div>
+        <div class="stat-desc">Critical ruptures / flooding</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon cyan"><i class="fa-solid fa-droplet"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ kpis.water_saved_str }}</div>
+        <div class="stat-label">Water Saved</div>
+        <div class="stat-desc">Estimated loss avoided</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Duplicate Incidents Alert Banner (if any) -->
+  {% if duplicate_complaints %}
+    <div class="card" style="border: 1.5px solid #fde68a; background: #fffdf5; padding: 20px; margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-copy" style="color: #d97706; font-size: 1.25rem;"></i>
+          <h3 style="font-size: 1.05rem; font-weight: 700; color: #92400e; margin: 0;">
+            AI Duplicate Detection Alert ({{ duplicate_complaints|length }} Detected)
+          </h3>
+        </div>
+        <span class="badge" style="background:#fef3c7; color:#b45309; font-weight:700;">Action Recommended</span>
+      </div>
+      <p style="font-size: 0.85rem; color: #78350f; margin-bottom: 14px;">
+        The AI spatial &amp; textual matching algorithm identified the following incoming tickets matching existing open complaints. Review to merge or dismiss:
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px;">
+        {% for dup in duplicate_complaints %}
+          <div style="background: white; border: 1px solid #fde68a; border-radius: var(--radius-md); padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <strong style="color: #0284c7; font-family: monospace;">{{ dup.complaint_id }}</strong>
+              <span class="badge badge-prio-high">{{ dup.duplicate_score }}% Match</span>
+            </div>
+            <div style="font-weight: 600; font-size: 0.9rem; color: #0f172a; margin-bottom: 4px;">{{ dup.title }}</div>
+            <div style="font-size: 0.775rem; color: #64748b; margin-bottom: 8px;">
+              Matches Primary Ticket: <a href="{{ url_for('track_complaint', id=dup.is_duplicate_of) }}" style="font-weight: 700; text-decoration: underline;">{{ dup.is_duplicate_of }}</a>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <a href="{{ url_for('track_complaint', id=dup.complaint_id) }}" class="btn btn-outline btn-sm" style="font-size: 0.75rem;">
+                Review Details
+              </a>
+              <a href="{{ url_for('admin_complaints') }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem;">
+                Go to Triage Center
+              </a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Charts Row -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
+    <!-- Category Doughnut -->
+    <div class="card" style="padding: 24px;">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fa-solid fa-chart-pie" style="color: var(--primary);"></i> Complaint Categories Breakdown
+        </h3>
+        <span class="badge badge-ai">ML Classified</span>
+      </div>
+      <div style="height: 280px; position: relative;">
+        <canvas id="categoryDoughnutChart" data-categories='{{ categories_json|safe }}'></canvas>
+      </div>
+    </div>
+
+    <!-- Priority Distribution Bar Chart -->
+    <div class="card" style="padding: 24px;">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fa-solid fa-chart-bar" style="color: #ef4444;"></i> AI Urgency &amp; Priority Distribution
+        </h3>
+        <span class="badge" style="background:#fee2e2; color:#dc2626;">Risk Tiering</span>
+      </div>
+      <div style="height: 280px; position: relative;">
+        <canvas id="priorityBarChart" data-priorities='{{ priorities_json|safe }}'></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Maintenance Field Crew Status Row -->
+  <div class="card" style="padding: 24px; margin-bottom: 28px;">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fa-solid fa-users-gear" style="color: var(--primary);"></i> Field Maintenance Personnel &amp; Current Workload
+      </h3>
+      <a href="{{ url_for('admin_complaints') }}" class="btn btn-secondary btn-sm">Dispatch Staff</a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px;">
+      {% for staff in staff_list %}
+        <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; display: flex; flex-direction: column;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-weight: 700; color: #0f172a; font-size: 1rem;">{{ staff.full_name }}</div>
+            <span class="badge" style="background: {% if staff.active_count > 2 %}#fee2e2; color:#dc2626;{% else %}#d1fae5; color:#047857;{% endif %} font-size: 0.72rem;">
+              {{ staff.active_count }} Active Jobs
+            </span>
+          </div>
+          <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 4px;">{{ staff.specialty }}</div>
+          <div style="font-size: 0.775rem; color: #0284c7; margin-bottom: 12px;">
+            <i class="fa-solid fa-map-pin"></i> {{ staff.zone }}
+          </div>
+          <div style="font-size: 0.75rem; color: #475569; margin-top: auto; border-top: 1px solid var(--border-color); padding-top: 8px;">
+            <i class="fa-solid fa-phone"></i> {{ staff.phone }}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Recent Complaints Table with Quick Triage -->
+  <div class="card" style="padding: 24px;">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fa-solid fa-triangle-exclamation" style="color: #0284c7;"></i> Active Triage Queue (Recent 8 Complaints)
+      </h3>
+      <a href="{{ url_for('admin_complaints') }}" class="btn btn-outline btn-sm">
+        View All Complaints Table <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Ticket ID</th>
+            <th>Citizen / Contact</th>
+            <th>Location</th>
+            <th>Category (AI)</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Reported</th>
+            <th>Quick Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in recent_complaints %}
+            <tr>
+              <td>
+                <strong style="color: var(--primary); font-family: monospace;">{{ c.complaint_id }}</strong>
+                {% if c.is_duplicate_of %}
+                  <div style="font-size: 0.68rem; color: #d97706;"><i class="fa-solid fa-copy"></i> Duplicate</div>
+                {% endif %}
+              </td>
+              <td>
+                <div style="font-weight: 600; color: #0f172a;">{{ c.user_name or 'Anonymous Citizen' }}</div>
+                <div style="font-size: 0.75rem; color: #64748b;">{{ c.user_phone or 'No phone' }}</div>
+              </td>
+              <td style="font-size: 0.85rem;">
+                <div style="font-weight: 600;">{{ c.street_name }}</div>
+                <div style="font-size: 0.75rem; color: #64748b;">{{ c.landmark or 'Central Sector' }}</div>
+              </td>
+              <td>
+                <span class="badge" style="background:#e0f2fe; color:#0369a1;">{{ c.category }}</span>
+                <span style="font-size: 0.7rem; color: #64748b; display: block; margin-top: 2px;">{{ c.ai_confidence }}% Conf</span>
+              </td>
+              <td>
+                <span class="badge badge-prio-{{ c.priority.lower() }}">{{ c.priority }}</span>
+              </td>
+              <td>
+                <span class="badge badge-{{ c.status.lower().replace(' ', '-') }}">{{ c.status }}</span>
+              </td>
+              <td style="font-size: 0.8rem; color: #64748b; white-space: nowrap;">
+                {{ c.created_at[:16] }}
+              </td>
+              <td>
+                <a href="{{ url_for('admin_complaints', highlight=c.complaint_id) }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem;">
+                  <i class="fa-solid fa-sliders"></i> Triage
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/admin_charts.js') }}"></script>
+{% endblock %}

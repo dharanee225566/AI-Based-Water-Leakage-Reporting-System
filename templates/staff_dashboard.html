@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Field Maintenance Dispatch - AquaWatch AI{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 20px;">
+  <!-- Staff Profile Banner -->
+  <div class="card card-glass" style="padding: 28px; margin-bottom: 32px; border: 1.5px solid var(--border-color); box-shadow: var(--shadow-md);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+      <div style="display: flex; align-items: center; gap: 20px;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.85rem; box-shadow: var(--shadow-sm);">
+          <i class="fa-solid fa-helmet-safety"></i>
+        </div>
+        <div>
+          <div style="font-size: 0.8rem; font-weight: 700; color: #0284c7; text-transform: uppercase;">FIELD CREW DISPATCH TERMINAL</div>
+          <h1 style="font-size: 1.75rem; font-weight: 800; color: #0f172a; margin: 2px 0;">{{ staff_user.full_name }}</h1>
+          <div style="font-size: 0.875rem; color: #475569;">
+            Specialty: <strong>{{ profile.specialty }}</strong> &bull; Assigned: <strong>{{ profile.zone }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 14px; align-items: center;">
+        <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 10px 18px; text-align: center;">
+          <div style="font-size: 1.45rem; font-weight: 800; color: #0284c7;">{{ assigned_tasks|length }}</div>
+          <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">ACTIVE ASSIGNMENTS</div>
+        </div>
+        <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 10px 18px; text-align: center;">
+          <div style="font-size: 1.45rem; font-weight: 800; color: #10b981;">{{ resolved_count }}</div>
+          <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">RESOLVED BY ME</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assigned Tasks Section -->
+  <div style="margin-bottom: 24px;">
+    <h2 style="font-size: 1.45rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">
+      <i class="fa-solid fa-clipboard-check" style="color: var(--primary);"></i> Assigned Work Orders ({{ assigned_tasks|length }})
+    </h2>
+    <p style="font-size: 0.9rem; color: #64748b;">
+      Review citizen telemetry, check AI dispatch summaries, navigate to site, and submit verified repair milestones.
+    </p>
+  </div>
+
+  {% if assigned_tasks %}
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+      {% for task in assigned_tasks %}
+        <div class="card" style="padding: 24px; {% if task.priority == 'High' %}border-left: 6px solid #ef4444;{% else %}border-left: 6px solid var(--primary);{% endif %}">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; margin-bottom: 16px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <span style="font-family: monospace; font-size: 1.15rem; font-weight: 800; color: #0284c7;">{{ task.complaint_id }}</span>
+                <span class="badge badge-prio-{{ task.priority.lower() }}">{{ task.priority }} Priority</span>
+                <span class="badge badge-{{ task.status.lower().replace(' ', '-') }}">{{ task.status }}</span>
+                <span class="badge" style="background:#e0f2fe; color:#0369a1;">{{ task.category }}</span>
+              </div>
+              <h3 style="font-size: 1.3rem; font-weight: 800; color: #0f172a; margin-bottom: 4px;">{{ task.title }}</h3>
+              <div style="font-size: 0.85rem; color: #64748b;">
+                <i class="fa-solid fa-location-dot" style="color:#0284c7;"></i> {{ task.street_name }} {% if task.landmark %}&bull; Landmark: {{ task.landmark }}{% endif %}
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <a href="https://www.google.com/maps/search/?api=1&query={{ task.latitude }},{{ task.longitude }}" target="_blank" class="btn btn-secondary btn-sm">
+                <i class="fa-solid fa-diamond-turn-right"></i> GPS Navigation
+              </a>
+              <button type="button" class="btn btn-primary btn-sm" onclick="openStaffUpdateModal('{{ task.complaint_id }}', '{{ task.status }}')">
+                <i class="fa-solid fa-wrench"></i> Update Repair Progress
+              </button>
+            </div>
+          </div>
+
+          <!-- AI Field Crew Summary Callout -->
+          <div style="background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 18px;">
+            <div style="font-size: 0.775rem; font-weight: 800; color: #15803d; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-robot"></i> AI FIELD DISPATCH ADVISORY
+            </div>
+            <div style="font-size: 0.925rem; font-weight: 600; color: #166534; line-height: 1.5;">
+              "{{ task.ai_field_summary }}"
+            </div>
+          </div>
+
+          <!-- 2-column description & photo -->
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: start;">
+            <div>
+              <div style="font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 4px;">CITIZEN'S STATEMENT:</div>
+              <p style="font-size: 0.875rem; color: #334155; line-height: 1.6; background: #f8fafc; padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                "{{ task.description }}"
+              </p>
+
+              {% if task.assignment_notes %}
+                <div style="margin-top: 10px; font-size: 0.825rem; color: #0284c7;">
+                  <i class="fa-solid fa-headset"></i> <strong>Admin Dispatch Note:</strong> {{ task.assignment_notes }}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Photo preview -->
+            <div>
+              <div style="font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 4px;">EVIDENCE PHOTO:</div>
+              <div style="border-radius: var(--radius-md); overflow: hidden; height: 110px; background: #e2e8f0; border: 1px solid var(--border-color);">
+                <img src="{{ url_for('static', filename='uploads/' + task.photo_path) if task.photo_path else url_for('static', filename='images/sample_leaks/pipe_leak.svg') }}" 
+                     alt="Leak Evidence" 
+                     style="width: 100%; height: 100%; object-fit: cover;"
+                     onerror="this.src='/static/images/sample_leaks/pipe_leak.svg';">
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 16px; font-size: 0.775rem; color: #64748b;">
+            <span>Reported on: {{ task.created_at[:16] }}</span>
+            <a href="{{ url_for('track_complaint', id=task.complaint_id) }}" style="color: var(--primary); font-weight: 600;">
+              View Complete Ticket Audit Log <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <!-- Empty State -->
+    <div class="card" style="text-align: center; padding: 60px 20px;">
+      <div style="width: 64px; height: 64px; border-radius: 50%; background: #d1fae5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; margin: 0 auto 16px;">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <h3 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">All Assigned Jobs Completed!</h3>
+      <p style="font-size: 0.95rem; color: #64748b; max-width: 440px; margin: 0 auto;">
+        You currently have zero active dispatch assignments. Central operations will notify you when new water leak tickets are assigned to your sector.
+      </p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- =========================================================================
+     STAFF MODAL: Update Progress & Complete Repair
+     ========================================================================= -->
+<div class="modal-overlay" id="modal-staff-update">
+  <div class="modal-card">
+    <button class="modal-close-btn" onclick="closeModal('modal-staff-update')">&times;</button>
+    <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 6px;">
+      <i class="fa-solid fa-wrench" style="color: var(--primary);"></i> Update Field Repair Progress
+    </h3>
+    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">
+      Work Order ID: <strong id="staff-modal-cid" style="font-family: monospace; color: var(--primary);"></strong>
+    </p>
+
+    <form action="{{ url_for('staff_update_progress') }}" method="POST">
+      <input type="hidden" name="complaint_id" id="form-staff-cid" value="">
+
+      <div class="form-group">
+        <label for="staff_new_status" class="form-label">Job Status *</label>
+        <select name="status" id="staff_new_status" class="form-select" required>
+          <option value="In Progress">In Progress (Arrived on site, excavation/isolation active)</option>
+          <option value="Resolved">Resolved (Leak repaired, pressure tested &amp; verified)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="repair_notes" class="form-label">Technician Repair Notes / Details *</label>
+        <textarea name="notes" id="repair_notes" class="form-control" rows="4" placeholder="Detail action taken (e.g. Replaced 50mm PVC collar, clamped subterranean pipe, restored 4.5 bar line pressure, repaved sidewalk)..." required></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-staff-update')">Cancel</button>
+        <button type="submit" class="btn btn-success">
+          <i class="fa-solid fa-check"></i> Submit Milestone
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openStaffUpdateModal(cid, status) {
+  document.getElementById('staff-modal-cid').textContent = cid;
+  document.getElementById('form-staff-cid').value = cid;
+  document.getElementById('staff_new_status').value = status === 'Resolved' ? 'Resolved' : 'In Progress';
+  openModal('modal-staff-update');
+}
+</script>
+{% endblock %}

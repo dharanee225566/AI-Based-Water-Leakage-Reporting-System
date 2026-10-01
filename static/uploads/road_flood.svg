@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%">
+  <rect width="600" height="400" fill="#94a3b8"/>
+  <rect x="40" y="100" width="90" height="160" fill="#475569"/>
+  <rect x="160" y="70" width="110" height="190" fill="#334155"/>
+  <rect x="310" y="110" width="130" height="150" fill="#475569"/>
+  <rect x="480" y="80" width="80" height="180" fill="#1e293b"/>
+  <rect y="250" width="600" height="150" fill="#0284c7" opacity="0.85"/>
+  <path d="M0,270 Q150,255 300,270 T600,270" fill="none" stroke="#38bdf8" stroke-width="4"/>
+  <path d="M0,310 Q150,295 300,310 T600,310" fill="none" stroke="#e0f2fe" stroke-width="3"/>
+  <path d="M0,350 Q150,335 300,350 T600,350" fill="none" stroke="#bae6fd" stroke-width="2.5"/>
+  <polygon points="290,290 310,290 300,230" fill="#ea580c"/>
+  <rect x="294" y="255" width="12" height="8" fill="#ffffff"/>
+  <text x="300" y="385" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">ROADWAY INUNDATION &amp; OVERFLOW</text>
+</svg>

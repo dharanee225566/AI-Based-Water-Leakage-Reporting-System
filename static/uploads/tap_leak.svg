@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%">
+  <rect width="600" height="400" fill="#f8fafc"/>
+  <rect x="100" y="140" width="160" height="40" rx="5" fill="#64748b"/>
+  <path d="M260,130 L320,130 L320,200 L280,200 L280,170 L260,170 Z" fill="#94a3b8" stroke="#475569" stroke-width="3"/>
+  <rect x="305" y="90" width="30" height="15" rx="3" fill="#ef4444"/>
+  <rect x="315" y="105" width="10" height="25" fill="#64748b"/>
+  <path d="M280,200 L320,200 L315,225 L285,225 Z" fill="#64748b"/>
+  <path d="M300,235 C295,245 290,255 300,265 C310,255 305,245 300,235 Z" fill="#0284c7"/>
+  <path d="M300,285 C293,297 288,310 300,320 C312,310 307,297 300,285 Z" fill="#38bdf8"/>
+  <ellipse cx="300" cy="350" rx="70" ry="15" fill="#0ea5e9" opacity="0.5"/>
+  <text x="300" y="385" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#0f172a" text-anchor="middle">DEFECTIVE PUBLIC STANDPOST TAP EVIDENCE</text>
+</svg>

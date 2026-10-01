@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+
+{% block title %}AquaWatch AI - Smart Water Leakage Reporting & Management{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section style="background: radial-gradient(circle at 80% 20%, rgba(56, 189, 248, 0.15) 0%, rgba(248, 250, 252, 0) 60%), linear-gradient(180deg, #f0f9ff 0%, #f8fafc 100%); padding: 60px 0 80px; border-bottom: 1px solid var(--border-color); position: relative; overflow: hidden;">
+  <div class="container" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; align-items: center;">
+    <div>
+      <div style="display: inline-flex; align-items: center; gap: 8px; background: #e0f2fe; color: #0284c7; padding: 6px 14px; border-radius: 9999px; font-size: 0.825rem; font-weight: 700; margin-bottom: 20px; border: 1px solid #bae6fd;">
+        <i class="fa-solid fa-sparkles"></i> AI-POWERED MUNICIPAL WATER INFRASTRUCTURE
+      </div>
+      <h1 style="font-size: 2.85rem; font-weight: 800; line-height: 1.15; color: #0f172a; margin-bottom: 18px; letter-spacing: -1px;">
+        Empowering Citizens &amp; Cities to <span style="background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Stop Water Waste</span> with AI.
+      </h1>
+      <p style="font-size: 1.125rem; color: #475569; line-height: 1.6; margin-bottom: 30px; max-width: 580px;">
+        Report pipe bursts, dripping standposts, and road flooding in seconds. Our integrated machine learning model automatically classifies hazard severity, eliminates duplicate tickets, and dispatches field crews fast.
+      </p>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 32px;">
+        <a href="{{ url_for('report_leakage') }}" class="btn btn-primary btn-lg" id="hero-btn-report">
+          <i class="fa-solid fa-triangle-exclamation"></i> Report a Leak Now
+        </a>
+        <a href="{{ url_for('leakage_map') }}" class="btn btn-secondary btn-lg" id="hero-btn-map">
+          <i class="fa-solid fa-map-location-dot"></i> View Live City Map
+        </a>
+      </div>
+
+      <!-- Quick Track Search Box -->
+      <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 8px 12px; box-shadow: var(--shadow-md); max-width: 460px; display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-magnifying-glass" style="color: var(--primary); margin-left: 8px;"></i>
+        <form action="{{ url_for('track_complaint') }}" method="GET" style="display: flex; width: 100%; gap: 8px;">
+          <input type="text" name="id" placeholder="Track ticket (e.g. AQUA-2026-1001)..." style="border: none; outline: none; width: 100%; font-size: 0.925rem; color: var(--text-primary);" required>
+          <button type="submit" class="btn btn-primary btn-sm">Track</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Hero Illustration / Dynamic AI Badge Card -->
+    <div style="position: relative;">
+      <div class="card card-glass" style="padding: 28px; box-shadow: var(--shadow-lg); border: 1.5px solid rgba(255,255,255,0.8);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Logo" style="width: 32px; height: 32px;">
+            <div>
+              <div style="font-weight: 700; font-size: 0.95rem;">Real-Time AI Pipeline</div>
+              <div style="font-size: 0.75rem; color: #10b981;"><i class="fa-solid fa-circle" style="font-size: 8px;"></i> ML Engine Online</div>
+            </div>
+          </div>
+          <span class="badge badge-prio-high"><i class="fa-solid fa-bolt"></i> High Priority</span>
+        </div>
+
+        <div style="background: #f8fafc; border-radius: var(--radius-md); padding: 14px; margin-bottom: 14px; border: 1px solid var(--border-color);">
+          <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 4px; font-weight: 600;">INCOMING CITIZEN TELEMETRY</div>
+          <div style="font-size: 0.875rem; font-weight: 600; color: #0f172a;">"Main transmission line burst near Trinity Circle. Massive geyser shooting 15ft."</div>
+        </div>
+
+        <div class="ai-box" style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 0.85rem; font-weight: 700; color: #0284c7;">ML Classification:</span>
+            <span class="badge" style="background:#0284c7; color:white; font-size:0.75rem;">Main Pipeline Burst</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #64748b; margin-bottom: 2px;">
+            <span>Confidence Score</span>
+            <span style="font-weight: 700; color: #0284c7;">92.4%</span>
+          </div>
+          <div class="confidence-bar-container" style="height: 6px; margin: 0 0 8px;">
+            <div class="confidence-bar-fill" style="width: 92.4%;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #475569;">
+            <span><i class="fa-solid fa-faucet-drip"></i> Est. Water Loss:</span>
+            <strong style="color: #dc2626;">~7,500 Liters / Hour</strong>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: #64748b; border-top: 1px solid var(--border-color); padding-top: 12px;">
+          <span><i class="fa-solid fa-clock-rotate-left"></i> Auto-triaged in 0.08s</span>
+          <span style="color: #0284c7; font-weight: 600;"><i class="fa-solid fa-truck-fast"></i> Crew Dispatched</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Live Impact Statistics -->
+<section style="padding: 40px 0; background: white; border-bottom: 1px solid var(--border-color);">
+  <div class="container">
+    <div class="stats-grid" style="margin-bottom: 0;">
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-clipboard-list"></i></div>
+        <div class="stat-info">
+          <div class="stat-value">{{ stats.total }}</div>
+          <div class="stat-label">Total Reports Logged</div>
+          <div class="stat-desc">Citizen submitted incidents</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="stat-info">
+          <div class="stat-value">{{ stats.resolved }}</div>
+          <div class="stat-label">Resolved Leaks</div>
+          <div class="stat-desc">{{ stats.resolution_rate }}% resolution rate</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon amber"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+        <div class="stat-info">
+          <div class="stat-value">{{ stats.in_progress }}</div>
+          <div class="stat-label">Active Field Repairs</div>
+          <div class="stat-desc">Technicians deployed</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon cyan"><i class="fa-solid fa-droplet"></i></div>
+        <div class="stat-info">
+          <div class="stat-value">{{ stats.water_saved_str }}</div>
+          <div class="stat-label">Potable Water Saved</div>
+          <div class="stat-desc">Prevented distribution loss</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4-Step How It Works -->
+<section style="padding: 70px 0; background: var(--bg-main);">
+  <div class="container">
+    <div style="text-align: center; max-width: 680px; margin: 0 auto 50px;">
+      <div style="color: var(--primary); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+        HOW AQUAWATCH AI OPERATES
+      </div>
+      <h2 style="font-size: 2.15rem; font-weight: 800; color: #0f172a; margin-bottom: 14px;">
+        From Citizen Report to Field Repair in Minutes
+      </h2>
+      <p style="color: #64748b; font-size: 1rem;">
+        An automated end-to-end municipal pipeline designed to eliminate delays, prevent repeat dispatches, and accelerate hydraulic repairs.
+      </p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px;">
+      <div class="card" style="text-align: center; padding: 32px 20px;">
+        <div style="width: 58px; height: 58px; border-radius: 50%; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 18px;">
+          <i class="fa-solid fa-mobile-screen"></i>
+        </div>
+        <span class="badge" style="background:#f1f5f9; color:#475569; margin-bottom: 10px;">Step 1</span>
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">1. Citizen Reports Leak</h3>
+        <p style="font-size: 0.875rem; color: #64748b;">
+          Citizens upload leak photos, drop GPS pin, and describe the hazard on desktop or smartphone without app downloads.
+        </p>
+      </div>
+
+      <div class="card" style="text-align: center; padding: 32px 20px;">
+        <div style="width: 58px; height: 58px; border-radius: 50%; background: #dbeafe; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 18px;">
+          <i class="fa-solid fa-brain"></i>
+        </div>
+        <span class="badge" style="background:#f1f5f9; color:#475569; margin-bottom: 10px;">Step 2</span>
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">2. AI Classification &amp; Triage</h3>
+        <p style="font-size: 0.875rem; color: #64748b;">
+          Natural language model categorizes leak type, flags duplicates using Haversine distance, and computes priority score.
+        </p>
+      </div>
+
+      <div class="card" style="text-align: center; padding: 32px 20px;">
+        <div style="width: 58px; height: 58px; border-radius: 50%; background: #ede9fe; color: #7c3aed; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 18px;">
+          <i class="fa-solid fa-truck-pickup"></i>
+        </div>
+        <span class="badge" style="background:#f1f5f9; color:#475569; margin-bottom: 10px;">Step 3</span>
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">3. Field Crew Dispatch</h3>
+        <p style="font-size: 0.875rem; color: #64748b;">
+          Maintenance staff receives concise AI Field Summaries, navigational coordinates, and work orders directly on mobile dashboards.
+        </p>
+      </div>
+
+      <div class="card" style="text-align: center; padding: 32px 20px;">
+        <div style="width: 58px; height: 58px; border-radius: 50%; background: #d1fae5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 18px;">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <span class="badge" style="background:#f1f5f9; color:#475569; margin-bottom: 10px;">Step 4</span>
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">4. Verified Resolution</h3>
+        <p style="font-size: 0.875rem; color: #64748b;">
+          Crew completes repair, records pressure metrics, closes ticket, and notifies citizen with transparent audit timeline.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AI Core Capabilities Showcase -->
+<section style="padding: 70px 0; background: white; border-top: 1px solid var(--border-color);">
+  <div class="container">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
+      <div>
+        <div style="color: var(--primary); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+          INTELLIGENT WATER DEFENSE
+        </div>
+        <h2 style="font-size: 2.15rem; font-weight: 800; color: #0f172a; margin-bottom: 18px;">
+          Engineered to Solve Real Municipal Headaches
+        </h2>
+        <p style="color: #475569; font-size: 1.05rem; line-height: 1.6; margin-bottom: 24px;">
+          Traditional reporting hotlines suffer from flood of duplicate calls, misclassified tickets, and delayed dispatches. AquaWatch AI solves this with four specialized machine learning capabilities:
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: flex; gap: 14px;">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <i class="fa-solid fa-tags"></i>
+            </div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700;">Sub-Second NLP Complaint Classification</h4>
+              <p style="font-size: 0.875rem; color: #64748b;">Categorizes into pipe burst, tap leak, roadway flooding, meter damage, or sewage contamination automatically.</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 14px;">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <i class="fa-solid fa-copy"></i>
+            </div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700;">Spatial &amp; Textual Duplicate Detection</h4>
+              <p style="font-size: 0.875rem; color: #64748b;">Calculates Haversine distance and TF-IDF cosine similarity to merge redundant citizen tickets and avoid double dispatch.</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 14px;">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700;">Dynamic Priority &amp; Water Loss Estimation</h4>
+              <p style="font-size: 0.875rem; color: #64748b;">Ranks urgency from High to Low and estimates Liters/Hour water loss to prioritize critical transmission line bursts first.</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 14px;">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: #ede9fe; color: #7c3aed; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <i class="fa-solid fa-file-lines"></i>
+            </div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 700;">AI Field Crew Dispatch Summaries</h4>
+              <p style="font-size: 0.875rem; color: #64748b;">Synthesizes clean 2-sentence actionable instructions with hazard advisories for field technicians on mobile devices.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Card -->
+      <div class="card" style="padding: 28px; background: #f8fafc; border: 1.5px solid var(--border-color);">
+        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-fire-flame-curved" style="color: #ef4444;"></i> Identified Urban Hotspot Streets
+        </h3>
+        <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 20px;">
+          AI analyzes historical complaints to detect aging conduit corridors requiring proactive replacement.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          {% for spot in hotspots %}
+            <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong style="font-size: 0.9rem; color: #0f172a;">{{ spot.street }}</strong>
+                <div style="font-size: 0.75rem; color: #64748b;">{{ spot.count }} recorded incidents</div>
+              </div>
+              {% if spot.is_critical %}
+                <span class="badge badge-prio-high"><i class="fa-solid fa-triangle-exclamation"></i> Critical Corridor</span>
+              {% else %}
+                <span class="badge badge-prio-med">Monitored Zone</span>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+
+        <div style="margin-top: 20px; text-align: center;">
+          <a href="{{ url_for('analytics_page') }}" class="btn btn-outline btn-sm" style="width: 100%;">
+            Explore Full Leakage Analytics <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Recent Verified Reports Showcase -->
+<section style="padding: 70px 0; background: var(--bg-main);">
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px;">
+      <div>
+        <div style="color: var(--primary); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+          TRANSPARENT MUNICIPAL AUDIT
+        </div>
+        <h2 style="font-size: 1.85rem; font-weight: 800; color: #0f172a;">Recent Verified Complaints</h2>
+      </div>
+      <a href="{{ url_for('leakage_map') }}" class="btn btn-secondary btn-sm">
+        View All On Map <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+      {% for c in recent_complaints %}
+        <div class="card" style="padding: 18px; display: flex; flex-direction: column;">
+          <div style="position: relative; margin-bottom: 12px; border-radius: var(--radius-md); overflow: hidden; background: #e2e8f0; height: 140px;">
+            <img src="{{ url_for('static', filename='uploads/' + c.photo_path) if c.photo_path else url_for('static', filename='images/sample_leaks/pipe_leak.svg') }}" 
+                 alt="Leak photo" 
+                 style="width: 100%; height: 100%; object-fit: cover;"
+                 onerror="this.src='/static/images/sample_leaks/pipe_leak.svg';">
+            <span class="badge badge-{{ c.status.lower().replace(' ', '-') }}" style="position: absolute; top: 10px; right: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
+              {{ c.status }}
+            </span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 0.75rem; font-weight: 700; color: #0284c7;">{{ c.complaint_id }}</span>
+            <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:0.7rem;">{{ c.category }}</span>
+          </div>
+
+          <h4 style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 6px; line-height: 1.35; flex: 1;">
+            {{ c.title }}
+          </h4>
+
+          <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 14px;">
+            <i class="fa-solid fa-location-dot" style="color: #0284c7;"></i> {{ c.street_name }}
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: auto;">
+            <span class="badge badge-prio-{{ c.priority.lower() }}">{{ c.priority }} Prio</span>
+            <a href="{{ url_for('track_complaint', id=c.complaint_id) }}" class="btn btn-outline btn-sm">
+              Track Details
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Call to Action Banner -->
+<section style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 60px 0; text-align: center;">
+  <div class="container" style="max-width: 720px;">
+    <h2 style="font-size: 2.25rem; font-weight: 800; margin-bottom: 16px;">Spotted a Water Leak in Your Area?</h2>
+    <p style="font-size: 1.1rem; opacity: 0.9; margin-bottom: 28px; line-height: 1.6;">
+      Every minute matters. A single main rupture wastes up to 10,000 liters every hour. Submit a photo and location now so maintenance crews can isolate the line.
+    </p>
+    <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+      <a href="{{ url_for('report_leakage') }}" class="btn btn-lg" style="background: white; color: #0284c7; font-weight: 700;">
+        <i class="fa-solid fa-camera"></i> Report Incident Now
+      </a>
+      <a href="{{ url_for('register') }}" class="btn btn-outline btn-lg" style="color: white; border-color: rgba(255,255,255,0.6);">
+        Create Citizen Account
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}Report Water Leakage - AquaWatch AI{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 20px;">
+  <div style="margin-bottom: 28px;">
+    <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">CITIZEN REPORTING WORKFLOW</div>
+    <h1 style="font-size: 2.15rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Report a Water Leakage Hazard</h1>
+    <p style="font-size: 1rem; color: #475569;">
+      Our AI Engine analyzes your report in real time to categorize the hazard, estimate water loss, detect duplicates, and alert municipal crews.
+    </p>
+  </div>
+
+  <form action="{{ url_for('report_leakage') }}" method="POST" enctype="multipart/form-data" id="report-leak-form">
+    <div style="display: grid; grid-template-columns: 1.25fr 0.95fr; gap: 32px; align-items: start;">
+      
+      <!-- Left Column: Report Details & Location -->
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        
+        <!-- Incident Information Card -->
+        <div class="card" style="padding: 24px;">
+          <h2 class="card-title" style="margin-bottom: 20px;">
+            <i class="fa-solid fa-circle-info" style="color: var(--primary);"></i> 1. Incident Information
+          </h2>
+
+          <div class="form-group">
+            <label for="title" class="form-label">Incident Headline / Summary *</label>
+            <input type="text" id="title" name="title" class="form-control" placeholder="e.g. Underground pipe burst leaking onto pedestrian sidewalk" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label for="category" class="form-label">Leak Category</label>
+              <select id="category" name="category" class="form-select">
+                <option value="Auto" selected>✨ Auto-Detect via AI (Recommended)</option>
+                <option value="Pipe Leakage">Pipe Leakage</option>
+                <option value="Tap Leakage">Tap Leakage</option>
+                <option value="Road Flooding">Road Flooding</option>
+                <option value="Main Pipeline Burst">Main Pipeline Burst</option>
+                <option value="Sewage & Contamination">Sewage &amp; Contamination</option>
+                <option value="Other / Meter">Other / Meter</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="user_severity" class="form-label">
+                Reported Severity: <span id="severity-val-label" style="color: var(--primary); font-weight:700;">3 - Notable Pool / Sidewalk Flooding</span>
+              </label>
+              <input type="range" id="user_severity" name="user_severity" min="1" max="5" value="3" class="form-control" style="cursor: pointer; padding: 4px;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #64748b; margin-top: 4px;">
+                <span>1 (Minor Drip)</span>
+                <span>3 (Moderate)</span>
+                <span>5 (Catastrophic Burst)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="description" class="form-label">Detailed Description of Problem *</label>
+            <textarea id="description" name="description" class="form-control" rows="4" placeholder="Describe the water leak in detail (e.g., location specifics, whether water is gushing or dripping, if clean or foul-smelling, and traffic impacts)..." required></textarea>
+            <div class="form-text">Tip: The AI model automatically extracts hazard keywords and classifies urgency based on your description.</div>
+          </div>
+        </div>
+
+        <!-- Geographic Location Card -->
+        <div class="card" style="padding: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 class="card-title" style="margin-bottom: 0;">
+              <i class="fa-solid fa-map-location-dot" style="color: var(--primary);"></i> 2. Leakage Location
+            </h2>
+            <button type="button" class="btn btn-outline btn-sm" id="btn-detect-location">
+              <i class="fa-solid fa-location-crosshairs"></i> Detect My GPS Location
+            </button>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="street_name" class="form-label">Street / Avenue Name *</label>
+              <input type="text" id="street_name" name="street_name" class="form-control" placeholder="e.g. 100 Feet Road, Indiranagar" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="landmark" class="form-label">Landmark / Crossroad (Optional)</label>
+              <input type="text" id="landmark" name="landmark" class="form-control" placeholder="e.g. Opposite Cafe Coffee Day">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 8px;">
+            <label class="form-label">Pinpoint Location on Map (Click or Drag Marker)</label>
+            <div id="report-map" class="map-picker"></div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+              <label for="latitude" class="form-label" style="font-size: 0.8rem;">Latitude</label>
+              <input type="text" id="latitude" name="latitude" class="form-control" value="12.9716" readonly style="background:#f1f5f9; font-family:monospace;">
+            </div>
+            <div>
+              <label for="longitude" class="form-label" style="font-size: 0.8rem;">Longitude</label>
+              <input type="text" id="longitude" name="longitude" class="form-control" value="77.5946" readonly style="background:#f1f5f9; font-family:monospace;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Evidence Photo Card -->
+        <div class="card" style="padding: 24px;">
+          <h2 class="card-title" style="margin-bottom: 16px;">
+            <i class="fa-solid fa-camera" style="color: var(--primary);"></i> 3. Photo Evidence
+          </h2>
+          <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 16px;">
+            Upload an image from your device or pick a sample demonstration photo below:
+          </p>
+
+          <div class="form-group">
+            <input type="file" id="photo" name="photo" class="form-control" accept="image/*">
+            <input type="hidden" id="sample_photo_name" name="sample_photo_name" value="">
+          </div>
+
+          <!-- Sample Photo Chips -->
+          <div style="margin-top: 12px;">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 8px;">
+              Or select a demonstration sample photo:
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+              <div class="sample-photo-card" data-photo="pipe_leak.svg" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; cursor: pointer; text-align: center; background: white;">
+                <img src="{{ url_for('static', filename='images/sample_leaks/pipe_leak.svg') }}" alt="Pipe Leak" style="height: 60px; width: 100%; object-fit: cover; border-radius: 4px; margin-bottom: 4px;">
+                <span style="font-size: 0.72rem; font-weight: 600;">Pipe Leak</span>
+              </div>
+
+              <div class="sample-photo-card" data-photo="main_burst.svg" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; cursor: pointer; text-align: center; background: white;">
+                <img src="{{ url_for('static', filename='images/sample_leaks/main_burst.svg') }}" alt="Main Burst" style="height: 60px; width: 100%; object-fit: cover; border-radius: 4px; margin-bottom: 4px;">
+                <span style="font-size: 0.72rem; font-weight: 600;">Main Burst</span>
+              </div>
+
+              <div class="sample-photo-card" data-photo="road_flood.svg" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; cursor: pointer; text-align: center; background: white;">
+                <img src="{{ url_for('static', filename='images/sample_leaks/road_flood.svg') }}" alt="Road Flood" style="height: 60px; width: 100%; object-fit: cover; border-radius: 4px; margin-bottom: 4px;">
+                <span style="font-size: 0.72rem; font-weight: 600;">Road Flood</span>
+              </div>
+
+              <div class="sample-photo-card" data-photo="tap_leak.svg" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; cursor: pointer; text-align: center; background: white;">
+                <img src="{{ url_for('static', filename='images/sample_leaks/tap_leak.svg') }}" alt="Tap Leak" style="height: 60px; width: 100%; object-fit: cover; border-radius: 4px; margin-bottom: 4px;">
+                <span style="font-size: 0.72rem; font-weight: 600;">Tap Leak</span>
+              </div>
+
+              <div class="sample-photo-card" data-photo="sewage_contamination.svg" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; cursor: pointer; text-align: center; background: white;">
+                <img src="{{ url_for('static', filename='images/sample_leaks/sewage_contamination.svg') }}" alt="Sewage" style="height: 60px; width: 100%; object-fit: cover; border-radius: 4px; margin-bottom: 4px;">
+                <span style="font-size: 0.72rem; font-weight: 600;">Sewage Mix</span>
+              </div>
+
+              <div class="sample-photo-card" data-photo="meter_leak.svg" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; cursor: pointer; text-align: center; background: white;">
+                <img src="{{ url_for('static', filename='images/sample_leaks/meter_leak.svg') }}" alt="Meter Leak" style="height: 60px; width: 100%; object-fit: cover; border-radius: 4px; margin-bottom: 4px;">
+                <span style="font-size: 0.72rem; font-weight: 600;">Meter Leak</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview Box -->
+          <div id="photo-preview-container" style="display: none; margin-top: 14px; text-align: center;">
+            <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 4px;">Active Photo Attachment Preview:</div>
+            <img id="photo-preview-img" src="" alt="Selected Photo" style="max-height: 140px; margin: 0 auto; border-radius: 8px; border: 1px solid var(--border-color);">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Real-Time AI Live Diagnostic Card & Duplicate Detection -->
+      <div style="position: sticky; top: 90px; display: flex; flex-direction: column; gap: 20px;">
+        
+        <!-- Live AI Triage Assistant Box -->
+        <div class="card card-glass" id="ai-preview-box" style="border: 1.5px solid #7dd3fc; box-shadow: var(--shadow-md); padding: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-wand-magic-sparkles" style="color: #0284c7; font-size: 1.2rem;"></i>
+              <strong style="color: #0369a1; font-size: 1rem;">Live AI Diagnostic Preview</strong>
+            </div>
+            <span class="badge badge-ai"><i class="fa-solid fa-microchip"></i> ACTIVE</span>
+          </div>
+
+          <p style="font-size: 0.825rem; color: #475569; margin-bottom: 16px;">
+            As you type your description, our scikit-learn NLP pipeline predicts category and hazard priority instantly.
+          </p>
+
+          <!-- Duplicate Warning Banner -->
+          <div class="duplicate-warning-banner" id="ai-duplicate-warning" style="display: none;">
+            <i class="fa-solid fa-triangle-exclamation duplicate-warning-icon"></i>
+            <div id="ai-duplicate-details" style="font-size: 0.85rem; color: #92400e;">
+              <!-- Dynamic duplicate text -->
+            </div>
+          </div>
+
+          <!-- Predicted Category -->
+          <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span style="font-size: 0.8rem; font-weight: 600; color: #64748b;">PREDICTED CATEGORY</span>
+              <span id="ai-confidence-text" style="font-size: 0.75rem; font-weight: 700; color: #0284c7;">Awaiting text...</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span id="ai-cat-badge" class="badge" style="background: #0284c7; color: white; font-size: 0.9rem; padding: 4px 10px;">
+                Start typing description...
+              </span>
+            </div>
+            <div class="confidence-bar-container">
+              <div class="confidence-bar-fill" id="ai-confidence-bar" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- Recommended Priority & Water Loss -->
+          <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; margin-bottom: 14px;">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 6px;">AI PRIORITY RECOMMENDATION</div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <span id="ai-priority-badge" class="badge badge-prio-med">Medium Priority (50/100)</span>
+            </div>
+            <div id="ai-water-loss-text" style="font-size: 0.825rem; font-weight: 700; color: #dc2626;">
+              ~200 L/hr estimated water loss
+            </div>
+          </div>
+
+          <!-- Extracted Hazard Keywords -->
+          <div style="margin-bottom: 20px;">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 6px;">IDENTIFIED KEYWORDS</div>
+            <div id="ai-keywords-list" style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">Enter description to extract keywords</span>
+            </div>
+          </div>
+
+          <!-- Final Submit Button -->
+          <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; box-shadow: var(--shadow-md);" id="btn-submit-report">
+            <i class="fa-solid fa-paper-plane"></i> Submit Incident Report
+          </button>
+          <div style="text-align: center; font-size: 0.75rem; color: #64748b; margin-top: 8px;">
+            A unique tracking ID will be generated upon submission.
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/report_ai.js') }}"></script>
+{% endblock %}

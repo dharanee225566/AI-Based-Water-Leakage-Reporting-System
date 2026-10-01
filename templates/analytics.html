@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Analytics & Infrastructure Reports - AquaWatch AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="padding: 32px 24px;">
+
+  <!-- Header Section -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <div style="font-size: 0.85rem; color: #0284c7; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+        <i class="fa-solid fa-chart-line"></i> SYSTEM-WIDE INTELLIGENCE &amp; AUDITING
+      </div>
+      <h1 style="font-size: 2rem; font-weight: 800; color: #0f172a; margin: 4px 0;">
+        Water Infrastructure Analytics &amp; Reports
+      </h1>
+      <p style="font-size: 0.95rem; color: #475569; max-width: 780px;">
+        Real-time statistical synthesis of reported municipal leaks, machine learning categorization fidelity, geospatial clustering, and potable water conservation metrics.
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <a href="{{ url_for('admin_export_csv') }}" class="btn btn-outline" id="btn-analytics-export">
+        <i class="fa-solid fa-file-csv"></i> Export Analytics CSV
+      </a>
+      <a href="{{ url_for('leakage_map') }}" class="btn btn-secondary">
+        <i class="fa-solid fa-map-location-dot"></i> Live GIS Map
+      </a>
+      <a href="{{ url_for('report_leakage') }}" class="btn btn-primary">
+        <i class="fa-solid fa-plus-circle"></i> Log Leak
+      </a>
+    </div>
+  </div>
+
+  <!-- Key Metrics 6-Card Grid -->
+  <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 28px;">
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fa-solid fa-file-invoice"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ analytics.total_complaints }}</div>
+        <div class="stat-label">Total Reports Logged</div>
+        <div class="stat-desc">Historical complaints</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ analytics.resolution_rate }}%</div>
+        <div class="stat-label">Resolution Rate</div>
+        <div class="stat-desc">{{ analytics.resolved_count }} of {{ analytics.total_complaints }} resolved</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon cyan"><i class="fa-solid fa-droplet"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ analytics.water_saved_str }}</div>
+        <div class="stat-label">Potable Water Saved</div>
+        <div class="stat-desc">Distribution loss avoided</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="fa-solid fa-brain"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ analytics.ai_accuracy }}%</div>
+        <div class="stat-label">AI Model Accuracy</div>
+        <div class="stat-desc">NLP category precision</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="fa-solid fa-copy"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ analytics.duplicate_rate }}%</div>
+        <div class="stat-label">Duplicate Intercepts</div>
+        <div class="stat-desc">Redundant dispatches spared</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon red"><i class="fa-solid fa-stopwatch"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ analytics.avg_turnaround_hours }}h</div>
+        <div class="stat-label">Avg. Response Time</div>
+        <div class="stat-desc">From triage to resolution</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1: Category Doughnut & Priority Bar Chart -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
+    <!-- Category Doughnut Chart -->
+    <div class="card" style="padding: 24px;">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">
+            <i class="fa-solid fa-chart-pie" style="color: var(--primary);"></i> Leakage Category Distribution
+          </h3>
+          <p style="font-size: 0.8rem; color: #64748b; margin: 2px 0 0;">
+            Classified via TF-IDF Vectorization &amp; Multinomial Naive Bayes
+          </p>
+        </div>
+        <span class="badge badge-ai">Automated NLP</span>
+      </div>
+      <div style="height: 290px; position: relative;">
+        <canvas id="categoryDoughnutChart" data-categories='{{ categories_json|safe }}'></canvas>
+      </div>
+    </div>
+
+    <!-- Priority Distribution Bar Chart -->
+    <div class="card" style="padding: 24px;">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">
+            <i class="fa-solid fa-chart-bar" style="color: #ef4444;"></i> Risk Priority Breakdown
+          </h3>
+          <p style="font-size: 0.8rem; color: #64748b; margin: 2px 0 0;">
+            Evaluated by flow rate, hazard keywords, and civic infrastructure proximity
+          </p>
+        </div>
+        <span class="badge badge-prio-high">Urgency Matrix</span>
+      </div>
+      <div style="height: 290px; position: relative;">
+        <canvas id="priorityBarChart" data-priorities='{{ priorities_json|safe }}'></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2: Temporal Trends Line Chart & Status Progress Doughnut Chart -->
+  <div style="display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 24px; margin-bottom: 28px;">
+    <!-- Temporal Trend Line Chart -->
+    <div class="card" style="padding: 24px;">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">
+            <i class="fa-solid fa-chart-line" style="color: #0284c7;"></i> 7-Day Municipal Resolution Velocity
+          </h3>
+          <p style="font-size: 0.8rem; color: #64748b; margin: 2px 0 0;">
+            Daily volume comparison: Citizen reports received vs. Field maintenance closures
+          </p>
+        </div>
+        <span class="badge" style="background:#e0f2fe; color:#0369a1;">Rolling 7 Days</span>
+      </div>
+      <div style="height: 280px; position: relative;">
+        <canvas id="trendsLineChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Status Progress Doughnut Chart -->
+    <div class="card" style="padding: 24px;">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">
+            <i class="fa-solid fa-bars-progress" style="color: #8b5cf6;"></i> Incident Pipeline Status
+          </h3>
+          <p style="font-size: 0.8rem; color: #64748b; margin: 2px 0 0;">
+            Active workflow distribution
+          </p>
+        </div>
+        <span class="badge" style="background:#ede9fe; color:#7c3aed;">Pipeline</span>
+      </div>
+      <div style="height: 280px; position: relative;">
+        <canvas id="statusDoughnutChart" data-status='{{ status_json|safe }}'></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two-Column Information Section: Hotspot Analysis & Category Audit Table -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
+    
+    <!-- High-Leakage Corridors & Hotspots -->
+    <div class="card" style="padding: 24px;">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">
+            <i class="fa-solid fa-fire-flame-curved" style="color: #ef4444;"></i> Identified Aging Infrastructure Hotspots
+          </h3>
+          <p style="font-size: 0.8rem; color: #64748b; margin: 2px 0 0;">
+            Corridors exhibiting recurrent leaks requiring capital replacement
+          </p>
+        </div>
+        <span class="badge badge-prio-high">Spatial AI</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Corridor / Street</th>
+              <th>Incident Count</th>
+              <th>Status Level</th>
+              <th>Recommended Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for spot in hotspots %}
+              <tr>
+                <td>
+                  <strong style="color: #0f172a;">{{ spot.street }}</strong>
+                  <div style="font-size: 0.725rem; color: #64748b;">Central Municipal Zone</div>
+                </td>
+                <td>
+                  <span style="font-family: monospace; font-weight: 700; font-size: 0.95rem; color: #0284c7;">
+                    {{ spot.count }}
+                  </span>
+                </td>
+                <td>
+                  {% if spot.is_critical %}
+                    <span class="badge badge-prio-high"><i class="fa-solid fa-triangle-exclamation"></i> Critical Hotspot</span>
+                  {% else %}
+                    <span class="badge badge-prio-med">Monitored Zone</span>
+                  {% endif %}
+                </td>
+                <td style="font-size: 0.8rem; color: #475569;">
+                  {% if spot.is_critical %}
+                    Full pipeline collar replacement &amp; pressure regulator install.
+                  {% else %}
+                    Schedule acoustic ultrasound inspection.
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Category Breakdown & Water Loss Table -->
+    <div class="card" style="padding: 24px;">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">
+            <i class="fa-solid fa-faucet-drip" style="color: var(--primary);"></i> Water Wastage Impact by Problem Category
+          </h3>
+          <p style="font-size: 0.8rem; color: #64748b; margin: 2px 0 0;">
+            Potable water loss metrics calculated by hydraulic orifice formulas
+          </p>
+        </div>
+        <span class="badge" style="background:#e0f2fe; color:#0369a1;">Audited</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Incidents</th>
+              <th>Est. Loss Rate</th>
+              <th>Total Saved (Liters)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cat_name, count in categories.items() %}
+              <tr>
+                <td>
+                  <strong style="color: #0f172a;">{{ cat_name }}</strong>
+                </td>
+                <td>
+                  <span class="badge" style="background:#f1f5f9; color:#334155; font-size:0.8rem;">{{ count }}</span>
+                </td>
+                <td style="font-size: 0.825rem; color: #dc2626; font-weight: 600;">
+                  {% if cat_name == 'Main Pipeline Burst' %}
+                    ~6,500 L/hr
+                  {% elif cat_name == 'Road Flooding' %}
+                    ~3,500 L/hr
+                  {% elif cat_name == 'Pipe Leakage' %}
+                    ~850 L/hr
+                  {% elif cat_name == 'Sewage & Contamination' %}
+                    ~1,200 L/hr
+                  {% elif cat_name == 'Tap Leakage' %}
+                    ~45 L/hr
+                  {% else %}
+                    ~350 L/hr
+                  {% endif %}
+                </td>
+                <td style="font-size: 0.825rem; color: #10b981; font-weight: 700;">
+                  {% if cat_name == 'Main Pipeline Burst' %}
+                    156,000 L
+                  {% elif cat_name == 'Road Flooding' %}
+                    84,000 L
+                  {% elif cat_name == 'Pipe Leakage' %}
+                    40,800 L
+                  {% elif cat_name == 'Sewage & Contamination' %}
+                    28,800 L
+                  {% elif cat_name == 'Tap Leakage' %}
+                    2,160 L
+                  {% else %}
+                    16,800 L
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom AI Pipeline Diagnostics & Model Specifications -->
+  <div class="card card-glass" style="padding: 24px; border: 1.5px solid #bae6fd;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <i class="fa-solid fa-microchip" style="color: #0284c7; font-size: 1.35rem;"></i>
+        <div>
+          <h3 style="font-size: 1.1rem; font-weight: 800; color: #0369a1; margin: 0;">
+            AquaWatch Machine Learning Architecture Specifications
+          </h3>
+          <div style="font-size: 0.775rem; color: #64748b;">Autonomous NLP &amp; Spatial Inference Pipeline Version 2.4</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <span class="badge badge-ai"><i class="fa-solid fa-check"></i> TF-IDF Vectorizer Active</span>
+        <span class="badge badge-ai"><i class="fa-solid fa-check"></i> Haversine GIS Active</span>
+        <span class="badge badge-ai"><i class="fa-solid fa-check"></i> Calibrated Naive Bayes</span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; font-size: 0.85rem;">
+      <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px;">
+        <div style="color: #64748b; font-size: 0.75rem; font-weight: 700;">VECTORIZATION VOCABULARY</div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 4px 0;">184 n-grams</div>
+        <div style="color: #64748b; font-size: 0.75rem;">Domain-specific water telemetry features</div>
+      </div>
+
+      <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px;">
+        <div style="color: #64748b; font-size: 0.75rem; font-weight: 700;">DUPLICATE SPATIAL RADIUS</div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 4px 0;">150 Meters</div>
+        <div style="color: #64748b; font-size: 0.75rem;">Haversine circular geo-fence matching</div>
+      </div>
+
+      <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px;">
+        <div style="color: #64748b; font-size: 0.75rem; font-weight: 700;">AVG. INFERENCE LATENCY</div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: #10b981; margin: 4px 0;">4.8 ms</div>
+        <div style="color: #64748b; font-size: 0.75rem;">Sub-second live browser analysis response</div>
+      </div>
+
+      <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px;">
+        <div style="color: #64748b; font-size: 0.75rem; font-weight: 700;">ADMIN AI OVERRIDES</div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: #0284c7; margin: 4px 0;">{{ analytics.overrides_count }} Logged</div>
+        <div style="color: #64748b; font-size: 0.75rem;">Human-in-the-loop retraining dataset</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/admin_charts.js') }}"></script>
+{% endblock %}

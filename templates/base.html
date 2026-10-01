@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}AquaWatch AI - Water Leakage Reporting & Management{% endblock %}</title>
+  <meta name="description" content="AI-Based Water Leakage Reporting and Management System for smart cities, reducing water wastage through machine learning classification and rapid maintenance dispatch.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo.svg') }}">
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- AquaWatch Design System -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar" id="main-navbar">
+    <div class="container nav-inner">
+      <a href="{{ url_for('index') }}" class="brand" id="brand-link">
+        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="AquaWatch Logo" class="brand-logo">
+        <span class="brand-text">AquaWatch<span class="brand-badge">AI</span></span>
+      </a>
+
+      <!-- Desktop Navigation Links -->
+      <ul class="nav-links" id="nav-menu">
+        <li>
+          <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" id="nav-home">
+            <i class="fa-solid fa-house"></i> Home
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('report_leakage') }}" class="nav-link {% if request.endpoint == 'report_leakage' %}active{% endif %}" id="nav-report">
+            <i class="fa-solid fa-triangle-exclamation"></i> Report Leak
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('track_complaint') }}" class="nav-link {% if request.endpoint == 'track_complaint' %}active{% endif %}" id="nav-track">
+            <i class="fa-solid fa-magnifying-glass-location"></i> Track Status
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('leakage_map') }}" class="nav-link {% if request.endpoint == 'leakage_map' %}active{% endif %}" id="nav-map">
+            <i class="fa-solid fa-map-location-dot"></i> Live Map
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('analytics_page') }}" class="nav-link {% if request.endpoint == 'analytics_page' %}active{% endif %}" id="nav-analytics">
+            <i class="fa-solid fa-chart-line"></i> Analytics
+          </a>
+        </li>
+
+        {% if session.get('user_id') %}
+          {% if session.get('role') == 'admin' %}
+            <li>
+              <a href="{{ url_for('admin_dashboard') }}" class="nav-link {% if request.endpoint in ['admin_dashboard', 'admin_complaints'] %}active{% endif %}" id="nav-admin">
+                <i class="fa-solid fa-shield-halved"></i> Admin
+              </a>
+            </li>
+          {% elif session.get('role') == 'staff' %}
+            <li>
+              <a href="{{ url_for('staff_dashboard') }}" class="nav-link {% if request.endpoint == 'staff_dashboard' %}active{% endif %}" id="nav-staff">
+                <i class="fa-solid fa-wrench"></i> Field Crew
+              </a>
+            </li>
+          {% else %}
+            <li>
+              <a href="{{ url_for('user_dashboard') }}" class="nav-link {% if request.endpoint == 'user_dashboard' %}active{% endif %}" id="nav-dashboard">
+                <i class="fa-solid fa-user"></i> My Portal
+              </a>
+            </li>
+          {% endif %}
+        {% endif %}
+      </ul>
+
+      <!-- User Action CTA -->
+      <div class="nav-cta">
+        {% if session.get('user_id') %}
+          <div style="display:flex; align-items:center; gap:10px;">
+            <a href="{% if session.get('role') == 'admin' %}{{ url_for('admin_dashboard') }}{% elif session.get('role') == 'staff' %}{{ url_for('staff_dashboard') }}{% else %}{{ url_for('user_dashboard') }}{% endif %}" class="btn btn-secondary btn-sm" id="btn-user-profile">
+              <i class="fa-regular fa-user-circle"></i> {{ session.get('user_name', 'User').split()[0] }}
+              <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:0.65rem; padding:1px 5px;">{{ session.get('role', 'citizen') }}</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm" id="btn-logout" title="Logout">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </a>
+          </div>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-secondary btn-sm" id="btn-login">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
+          </a>
+          <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm" id="btn-register">
+            Register
+          </a>
+        {% endif %}
+
+        <!-- Mobile Toggle Button -->
+        <button class="mobile-toggle" aria-label="Toggle navigation menu" id="mobile-toggle-btn">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash Messages -->
+  <div class="container alert-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+            <span>
+              {% if category == 'success' %}
+                <i class="fa-solid fa-circle-check" style="margin-right:8px;"></i>
+              {% elif category in ['danger', 'error'] %}
+                <i class="fa-solid fa-circle-exclamation" style="margin-right:8px;"></i>
+              {% else %}
+                <i class="fa-solid fa-circle-info" style="margin-right:8px;"></i>
+              {% endif %}
+              {{ message }}
+            </span>
+            <button class="alert-close" aria-label="Close">&times;</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Content Block -->
+  <main style="flex:1;">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div>
+          <div class="footer-brand">
+            <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="AquaWatch Logo" style="width:28px; height:28px;">
+            <span>AquaWatch AI</span>
+          </div>
+          <p style="font-size:0.9rem; line-height:1.6; max-width:340px;">
+            Next-generation AI Water Leakage Reporting &amp; Management platform. Combining NLP, spatial intelligence, and automated dispatch to protect municipal water infrastructure.
+          </p>
+          <div style="margin-top:14px; display:flex; gap:12px; font-size:1.1rem;">
+            <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+            <a href="#" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+            <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+          </div>
+        </div>
+
+        <div>
+          <h4 style="color:white; font-size:1rem; margin-bottom:14px;">Quick Links</h4>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:8px; font-size:0.875rem;">
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('report_leakage') }}">Report Leakage</a></li>
+            <li><a href="{{ url_for('track_complaint') }}">Track Complaint</a></li>
+            <li><a href="{{ url_for('leakage_map') }}">City Leakage Map</a></li>
+            <li><a href="{{ url_for('analytics_page') }}">AI Analytics</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="color:white; font-size:1rem; margin-bottom:14px;">Portals</h4>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:8px; font-size:0.875rem;">
+            <li><a href="{{ url_for('user_dashboard') }}">Citizen Portal</a></li>
+            <li><a href="{{ url_for('staff_dashboard') }}">Maintenance Staff</a></li>
+            <li><a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a></li>
+            <li><a href="{{ url_for('admin_complaints') }}">Triage Center</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="color:white; font-size:1rem; margin-bottom:14px;">Emergency Helpline</h4>
+          <p style="font-size:0.875rem; margin-bottom:10px;">For high-pressure pipe ruptures or flooding:</p>
+          <div style="background:#1e293b; padding:12px; border-radius:8px; border-left:3px solid #38bdf8;">
+            <div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:700;">Toll-Free 24x7</div>
+            <div style="font-size:1.15rem; font-weight:800; color:#38bdf8;">1800-425-WATER</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          &copy; 2026 AquaWatch AI Immersion Project. All rights reserved. Built with Python Flask, Scikit-Learn &amp; SQLite.
+        </div>
+        <div style="display:flex; gap:16px;">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+          <a href="#">System Status</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+  <!-- Core Main JS -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
